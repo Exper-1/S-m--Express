@@ -1,0 +1,180 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidOptionalCoordinates(data) {
+      return (!('latitude' in data) || (data.latitude is number && data.latitude >= -90 && data.latitude <= 90)) &&
+             (!('longitude' in data) || (data.longitude is number && data.longitude >= -180 && data.longitude <= 180));
+    }
+
+    function isValidPilgrimProfile(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.fullName is string && data.fullName.size() >= 1 && data.fullName.size() <= 80 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             data.tentNumber is string && data.tentNumber.size() <= 40 &&
+             data.sector is string && data.sector.size() <= 60 &&
+             data.landmark is string && data.landmark.size() <= 120 &&
+             data.deliveryNotes is string && data.deliveryNotes.size() <= 250 &&
+             data.preferredPayment in ['CASH_ON_DELIVERY', 'MOBILE_MONEY'] &&
+             data.mobileMoneyNetwork in ['MTN', 'MOOV', 'CELTIIS'] &&
+             data.notificationsEnabled is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time &&
+             isValidOptionalCoordinates(data);
+    }
+
+    function isValidOrderStatus(status) {
+      return status in [
+        'RECEIVED',
+        'ACCEPTED',
+        'PREPARING',
+        'READY',
+        'COURIER_ASSIGNED',
+        'PICKED_UP',
+        'DELIVERING',
+        'DELIVERED'
+      ];
+    }
+
+    function isValidOrderStatusTransition(prevStatus, nextStatus) {
+      return (prevStatus == 'RECEIVED' && nextStatus == 'ACCEPTED') ||
+             (prevStatus == 'ACCEPTED' && nextStatus == 'PREPARING') ||
+             (prevStatus == 'PREPARING' && nextStatus == 'READY') ||
+             (prevStatus == 'READY' && nextStatus == 'COURIER_ASSIGNED') ||
+             (prevStatus == 'COURIER_ASSIGNED' && nextStatus == 'PICKED_UP') ||
+             (prevStatus == 'PICKED_UP' && nextStatus == 'DELIVERING') ||
+             (prevStatus == 'DELIVERING' && nextStatus == 'DELIVERED');
+    }
+
+    function isValidOrder(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.orderNumber is string && data.orderNumber.size() >= 4 && data.orderNumber.size() <= 32 &&
+             data.vendorId is string && data.vendorId.size() >= 1 && data.vendorId.size() <= 60 &&
+             data.vendorName is string && data.vendorName.size() >= 1 && data.vendorName.size() <= 100 &&
+             data.itemsSummary is string && data.itemsSummary.size() >= 1 && data.itemsSummary.size() <= 600 &&
+             data.itemCount is int && data.itemCount >= 1 && data.itemCount <= 100 &&
+             data.subtotalFcfa is int && data.subtotalFcfa >= 0 && data.subtotalFcfa <= 5000000 &&
+             data.deliveryFeeFcfa is int && data.deliveryFeeFcfa >= 0 && data.deliveryFeeFcfa <= 50000 &&
+             data.totalFcfa is int && data.totalFcfa == data.subtotalFcfa + data.deliveryFeeFcfa &&
+             data.paymentMethod in ['CASH_ON_DELIVERY', 'MOBILE_MONEY'] &&
+             data.mobileMoneyNetwork is string && data.mobileMoneyNetwork.size() <= 20 &&
+             data.mobileMoneyNumber is string && data.mobileMoneyNumber.size() <= 30 &&
+             isValidOrderStatus(data.status) &&
+             data.courierName is string && data.courierName.size() <= 60 &&
+             data.courierPhone is string && data.courierPhone.size() <= 30 &&
+             data.tentNumber is string && data.tentNumber.size() >= 1 && data.tentNumber.size() <= 40 &&
+             data.sector is string && data.sector.size() >= 1 && data.sector.size() <= 60 &&
+             data.landmark is string && data.landmark.size() <= 120 &&
+             data.deliveryNotes is string && data.deliveryNotes.size() <= 250 &&
+             data.contactPhone is string && data.contactPhone.size() >= 4 && data.contactPhone.size() <= 30 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             data.updatedAt is timestamp && data.updatedAt <= request.time &&
+             isValidOptionalCoordinates(data);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if isOwner(userId);
+
+      allow create: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       incoming().keys().hasAll([
+                         'userId', 'fullName', 'phone', 'tentNumber', 'sector',
+                         'landmark', 'deliveryNotes', 'preferredPayment',
+                         'mobileMoneyNetwork', 'notificationsEnabled',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'fullName', 'phone', 'tentNumber', 'sector',
+                         'landmark', 'deliveryNotes', 'latitude', 'longitude',
+                         'preferredPayment', 'mobileMoneyNetwork', 'notificationsEnabled',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidPilgrimProfile(incoming());
+
+      allow update: if isOwner(userId) &&
+                       isValidId(userId) &&
+                       isValidPilgrimProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'fullName', 'phone', 'tentNumber', 'sector',
+                         'landmark', 'deliveryNotes', 'latitude', 'longitude',
+                         'preferredPayment', 'mobileMoneyNetwork', 'notificationsEnabled',
+                         'updatedAt'
+                       ]);
+
+      allow delete: if isOwner(userId) && isValidId(userId);
+
+      match /orders/{orderId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(orderId);
+        allow list: if isOwner(userId);
+
+        allow create: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(orderId) &&
+                         incoming().userId == userId &&
+                         incoming().status == 'RECEIVED' &&
+                         incoming().keys().hasAll([
+                           'userId', 'orderNumber', 'vendorId', 'vendorName',
+                           'itemsSummary', 'itemCount', 'subtotalFcfa',
+                           'deliveryFeeFcfa', 'totalFcfa', 'paymentMethod',
+                           'mobileMoneyNetwork', 'mobileMoneyNumber', 'status',
+                           'courierName', 'courierPhone', 'tentNumber', 'sector',
+                           'landmark', 'deliveryNotes', 'contactPhone',
+                           'createdAt', 'updatedAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'orderNumber', 'vendorId', 'vendorName',
+                           'itemsSummary', 'itemCount', 'subtotalFcfa',
+                           'deliveryFeeFcfa', 'totalFcfa', 'paymentMethod',
+                           'mobileMoneyNetwork', 'mobileMoneyNumber', 'status',
+                           'courierName', 'courierPhone', 'tentNumber', 'sector',
+                           'landmark', 'deliveryNotes', 'contactPhone',
+                           'latitude', 'longitude', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidOrder(incoming());
+
+        allow update: if isOwner(userId) &&
+                         isValidId(userId) &&
+                         isValidId(orderId) &&
+                         existing().status != 'DELIVERED' &&
+                         isValidOrder(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().orderNumber == existing().orderNumber &&
+                         incoming().totalFcfa == existing().totalFcfa &&
+                         isValidOrderStatusTransition(existing().status, incoming().status) &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'status', 'courierName', 'courierPhone', 'updatedAt'
+                         ]);
+
+        allow delete: if false;
+      }
+    }
+  }
+}

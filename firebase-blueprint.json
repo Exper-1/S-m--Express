@@ -1,0 +1,235 @@
+{
+  "entities": {
+    "PilgrimProfile": {
+      "title": "PilgrimProfile",
+      "description": "Saved pilgrim delivery profile and payment preferences for Sèmè Express.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the pilgrim."
+        },
+        "fullName": {
+          "type": "string",
+          "description": "Display name of the pilgrim."
+        },
+        "phone": {
+          "type": "string",
+          "description": "Reachable phone number on the Sèmè site."
+        },
+        "tentNumber": {
+          "type": "string",
+          "description": "Tent number or tent identifier."
+        },
+        "sector": {
+          "type": "string",
+          "description": "Pilgrimage row or sector name."
+        },
+        "landmark": {
+          "type": "string",
+          "description": "Nearby physical landmark for courier orientation."
+        },
+        "deliveryNotes": {
+          "type": "string",
+          "description": "Additional delivery instructions."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Optional GPS latitude."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Optional GPS longitude."
+        },
+        "preferredPayment": {
+          "type": "string",
+          "enum": ["CASH_ON_DELIVERY", "MOBILE_MONEY"],
+          "description": "Default payment method."
+        },
+        "mobileMoneyNetwork": {
+          "type": "string",
+          "enum": ["MTN", "MOOV", "CELTIIS"],
+          "description": "Preferred Mobile Money operator."
+        },
+        "notificationsEnabled": {
+          "type": "boolean",
+          "description": "Whether visual order status notifications are enabled."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp set via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "fullName",
+        "phone",
+        "tentNumber",
+        "sector",
+        "landmark",
+        "deliveryNotes",
+        "preferredPayment",
+        "mobileMoneyNetwork",
+        "notificationsEnabled",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "PilgrimOrder": {
+      "title": "PilgrimOrder",
+      "description": "Food, drink, or essential item delivery order placed by a pilgrim.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the ordering pilgrim."
+        },
+        "orderNumber": {
+          "type": "string",
+          "description": "Human-readable order code (e.g. SE-2027-4821)."
+        },
+        "vendorId": {
+          "type": "string",
+          "description": "Identifier of the selected restaurant or independent vendor."
+        },
+        "vendorName": {
+          "type": "string",
+          "description": "Display name of the vendor."
+        },
+        "itemsSummary": {
+          "type": "string",
+          "description": "Formatted summary of ordered items and quantities."
+        },
+        "itemCount": {
+          "type": "integer",
+          "description": "Total number of units in the order."
+        },
+        "subtotalFcfa": {
+          "type": "integer",
+          "description": "Product subtotal in FCFA (sample pricing)."
+        },
+        "deliveryFeeFcfa": {
+          "type": "integer",
+          "description": "Fixed delivery fee in FCFA (sample pricing)."
+        },
+        "totalFcfa": {
+          "type": "integer",
+          "description": "Total order amount in FCFA."
+        },
+        "paymentMethod": {
+          "type": "string",
+          "enum": ["CASH_ON_DELIVERY", "MOBILE_MONEY"],
+          "description": "Selected payment method."
+        },
+        "mobileMoneyNetwork": {
+          "type": "string",
+          "description": "Selected Mobile Money network if applicable."
+        },
+        "mobileMoneyNumber": {
+          "type": "string",
+          "description": "Mobile Money phone number if applicable."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "RECEIVED",
+            "ACCEPTED",
+            "PREPARING",
+            "READY",
+            "COURIER_ASSIGNED",
+            "PICKED_UP",
+            "DELIVERING",
+            "DELIVERED"
+          ],
+          "description": "8-stage order tracking status."
+        },
+        "courierName": {
+          "type": "string",
+          "description": "Assigned courier name."
+        },
+        "courierPhone": {
+          "type": "string",
+          "description": "Assigned courier phone."
+        },
+        "tentNumber": {
+          "type": "string",
+          "description": "Delivery tent number or name."
+        },
+        "sector": {
+          "type": "string",
+          "description": "Delivery sector or row."
+        },
+        "landmark": {
+          "type": "string",
+          "description": "Nearby landmark."
+        },
+        "deliveryNotes": {
+          "type": "string",
+          "description": "Additional delivery instructions."
+        },
+        "contactPhone": {
+          "type": "string",
+          "description": "Reachable contact phone number."
+        },
+        "latitude": {
+          "type": "number",
+          "description": "Optional GPS latitude."
+        },
+        "longitude": {
+          "type": "number",
+          "description": "Optional GPS longitude."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp set via FieldValue.serverTimestamp()."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update timestamp set via FieldValue.serverTimestamp()."
+        }
+      },
+      "required": [
+        "userId",
+        "orderNumber",
+        "vendorId",
+        "vendorName",
+        "itemsSummary",
+        "itemCount",
+        "subtotalFcfa",
+        "deliveryFeeFcfa",
+        "totalFcfa",
+        "paymentMethod",
+        "mobileMoneyNetwork",
+        "mobileMoneyNumber",
+        "status",
+        "courierName",
+        "courierPhone",
+        "tentNumber",
+        "sector",
+        "landmark",
+        "deliveryNotes",
+        "contactPhone",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/PilgrimProfile" },
+      "description": "Private pilgrim profile and default Sèmè delivery details."
+    },
+    "/users/{userId}/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/PilgrimOrder" },
+      "description": "Orders placed by the authenticated pilgrim with 8-stage delivery tracking."
+    }
+  }
+}

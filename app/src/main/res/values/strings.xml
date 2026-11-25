@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Sèmè Express</string>
+    <string name="tagline_pilgrimage">Sèmè 2027 • Livraison Pèlerins</string>
+    <string name="nav_home">Accueil</string>
+    <string name="nav_explore">Explorer</string>
+    <string name="nav_orders">Commandes</string>
+    <string name="nav_profile">Profil</string>
+    <string name="auth_button_google">Continuer avec Google</string>
+    <string name="sample_pricing_notice">Les prix et frais de livraison affichés sont des montants fictifs d\'exemple (FCFA).</string>
+</resources>

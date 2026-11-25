@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix Sèmè Express",
+  "description": "Application de commande et de livraison de repas, boissons et articles essentiels pour les pèlerins sur le site de Sèmè.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
